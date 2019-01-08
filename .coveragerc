@@ -1,0 +1,6 @@
+[run]
+omit =
+    *__init__.py
+    yelper/main.py
+    yelper/tests/*
+    yelper/cli/cli.py
