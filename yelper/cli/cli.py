@@ -9,6 +9,7 @@ from loguru import logger
 from yelper import config
 from yelper.cli.base import AbstractCommand
 from yelper.core.version import detect_from_metadata
+from yelper.core.yelper import deep_query
 
 # Set the project name.
 APP_NAME = 'yelper'
@@ -62,27 +63,32 @@ def cli(ctx, verbose):
 
 
 @click.command()
-def hello_world():
-    """Greet the world."""
-    click.echo('Hello World!')
-
-
-@click.command()
-@click.option('--name')
+@click.option('--location', default='austin, tx', help='the geographic area to search', show_default=True)
+@click.option('--offset', default=0, help='offset the list of results by this amount', show_default=True)
+@click.option('--limit', default=25, help='maximum number of results per page', show_default=True)
+@click.option('--radius', default=40000, help='search radius (in meters)', show_default=True)
+@click.option('--output', default='yelper.csv', help='filename to store the results', show_default=True)
+@click.argument('terms')
 @click.pass_context
-def hello(ctx, name):
-    """Greet somebody."""
-    command = Hello(ctx.params, ctx.obj)
+def retrieve(ctx, location, offset, limit, radius, output, terms):
+    """Retrieve information from Yelp."""
+    command = Retrieve(ctx.params, ctx.obj)
     command.execute()
 
 
-class Hello(AbstractCommand):
-    """Greet somebody."""
+class Retrieve(AbstractCommand):
+    """Retrieve information from Yelp."""
 
     def _execute(self):
         """Define the internal execution of the command."""
-        click.echo('Hey {}!'.format(self.args['name']))
+        deep_query(
+            self.args['terms'],
+            self.args['location'],
+            self.args['offset'],
+            self.args['limit'],
+            self.args['radius'],
+            self.args['output'],
+        )
 
 
-cli.add_command(hello)
-cli.add_command(hello_world)
+cli.add_command(retrieve)
