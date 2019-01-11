@@ -1,7 +1,7 @@
 yelper
-================
+======
 
-quick 
+Quickly scrap yelp.
 
 Quickstart
 ----------

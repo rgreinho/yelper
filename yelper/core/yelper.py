@@ -1,4 +1,5 @@
 """Define the core functions."""
+import asyncio
 import csv
 import dataclasses
 import os
@@ -41,7 +42,7 @@ class YelpBusiness:
         return d
 
 
-def deep_link(url):
+async def deep_link(url):
     """Retrieve the URL from the business detail page."""
     if not url:
         return f'\u274C'
@@ -61,7 +62,7 @@ def deep_link(url):
     return website
 
 
-def deep_emails(url):
+async def deep_emails(url):
     """Retrieve the email addresses on the main page."""
     if not url:
         return f'\u274C'
@@ -75,7 +76,22 @@ def deep_emails(url):
     return ', '.join(set(emails)) if emails else f'\U0001F611'
 
 
-def deep_query(terms, location, offset, limit, radius, output):
+async def deep_entry_parsing(business, counter):
+    """."""
+    # Prepare the new entry.
+    try:
+        entry = YelpBusiness.from_dict(business)
+    except Exception:
+        print(f'{counter:04} Skipped due to error.')
+    print(f'{counter:04} {entry.name}')
+
+    # Dig deeper.
+    entry.link = await deep_link(business.get('url'))
+    entry.emails = await deep_emails(entry.link)
+    return entry
+
+
+async def deep_query(terms, location, offset, limit, radius, output, pages):
     """Define the application entrypoint."""
     # Prepare the Yelp client.
     yelp_api = YelpAPI(os.environ['YELP_API_KEY'])
@@ -93,34 +109,34 @@ def deep_query(terms, location, offset, limit, radius, output):
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
         writer.writeheader()
 
-    # Search Yelp.
-    while True:
-        search_results = yelp_api.search_query(**params)
+        # Search Yelp.
+        while True:
+            search_results = yelp_api.search_query(**params)
 
-        # Check whether we need to process further or not.
-        if not search_results:
-            break
-        if not search_results['businesses']:
-            break
+            # Check whether we need to process further or not.
+            if not search_results:
+                break
+            if not search_results['businesses']:
+                break
+            if (params['offset'] / params['limit']) >= pages > 0:
+                break
 
-        # Open the CSV file  to add data.
-        with open(output, 'a') as csvfile:
-            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+            # Process the results.
+            tasks = [
+                deep_entry_parsing(business, params['offset'] + i)
+                for i, business in enumerate(search_results['businesses'])
+            ]
+            page_results = await asyncio.gather(*tasks)
 
-            # Go through each result.
-            for i, business in enumerate(search_results['businesses']):
-                counter = params['offset'] + i
-                try:
-                    entry = YelpBusiness.from_dict(business)
-                except Exception:
-                    print(f'{counter:04} Skipped due to error.')
-                    continue
-
-                # Prepare the new entry.
-                print(f'{counter:04} {entry.name}')
-                entry.link = deep_link(business.get('url'))
-                entry.emails = deep_emails(entry.link)
+            # Write the entries to the file and flush.
+            for entry in page_results:
                 writer.writerow(dataclasses.asdict(entry))
+            csvfile.flush()
 
-        # Update the offset before looping again.
-        params['offset'] += params['limit']
+            # Update the offset before looping again.
+            params['offset'] += params['limit']
+
+
+def async_deep_query(terms, location, offset, limit, radius, output, pages):
+    """."""
+    asyncio.run(deep_query(terms, location, offset, limit, radius, output, pages))
