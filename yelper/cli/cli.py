@@ -9,7 +9,7 @@ from loguru import logger
 from yelper import config
 from yelper.cli.base import AbstractCommand
 from yelper.core.version import detect_from_metadata
-from yelper.core.yelper import async_deep_query
+from yelper.core.yelper import deep_query
 
 # Set the project name.
 APP_NAME = 'yelper'
@@ -82,7 +82,7 @@ class Retrieve(AbstractCommand):
 
     def _execute(self):
         """Define the internal execution of the command."""
-        async_deep_query(
+        deep_query(
             self.args['terms'],
             self.args['location'],
             self.args['offset'],

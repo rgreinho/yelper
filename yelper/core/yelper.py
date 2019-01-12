@@ -7,8 +7,9 @@ import re
 import urllib
 import urllib3
 
+import aiohttp
 from lxml import html
-import requests
+# import request
 from yelpapi import YelpAPI
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -42,15 +43,16 @@ class YelpBusiness:
         return d
 
 
-async def deep_link(url):
+async def deep_link(url, session):
     """Retrieve the URL from the business detail page."""
     if not url:
         return f'\u274C'
 
     try:
-        response = requests.get(url, headers=HEADERS, verify=False).text
-        parser = html.fromstring(response)
-        raw_website_link = parser.xpath("//span[contains(@class,'biz-website')]/a/@href")
+        async with session.get(url, headers=HEADERS, verify_ssl=False) as request:
+            response = await request.text()
+            parser = html.fromstring(response)
+            raw_website_link = parser.xpath("//span[contains(@class,'biz-website')]/a/@href")
     except Exception:
         return f'\U0001F611'
 
@@ -62,14 +64,15 @@ async def deep_link(url):
     return website
 
 
-async def deep_emails(url):
+async def deep_emails(url, session):
     """Retrieve the email addresses on the main page."""
     if not url:
         return f'\u274C'
 
     try:
-        response = requests.get(url, headers=HEADERS, verify=False).text
-        emails = re.findall(r"[\w\.\+\-]+\@[\w]+\.[a-z]{2,4}", response)
+        async with session.get(url, headers=HEADERS, verify_ssl=False) as request:
+            response = await request.text()
+            emails = re.findall(r"[\w\.\+\-]+\@[\w]+\.[a-z]{2,4}", response)
     except Exception:
         return f'\U0001F611'
 
@@ -86,12 +89,13 @@ async def deep_entry_parsing(business, counter):
     print(f'{counter:04} {entry.name}')
 
     # Dig deeper.
-    entry.link = await deep_link(business.get('url'))
-    entry.emails = await deep_emails(entry.link)
+    async with aiohttp.ClientSession() as session:
+        entry.link = await deep_link(business.get('url'), session)
+        entry.emails = await deep_emails(entry.link, session)
     return entry
 
 
-async def deep_query(terms, location, offset, limit, radius, output, pages):
+async def async_deep_query(terms, location, offset=0, limit=20, radius=40000, output='yelper.csv', pages=-1):
     """Define the application entrypoint."""
     # Prepare the Yelp client.
     yelp_api = YelpAPI(os.environ['YELP_API_KEY'])
@@ -137,6 +141,6 @@ async def deep_query(terms, location, offset, limit, radius, output, pages):
             params['offset'] += params['limit']
 
 
-def async_deep_query(terms, location, offset, limit, radius, output, pages):
+def deep_query(terms, location, offset, limit, radius, output, pages):
     """."""
-    asyncio.run(deep_query(terms, location, offset, limit, radius, output, pages))
+    asyncio.run(async_deep_query(terms, location, offset, limit, radius, output, pages))
