@@ -1,14 +1,17 @@
 Faker==1.0.1
 Sphinx==1.8.3
+aioresponses==0.5.1
 bpython
 flake8==3.6.0
 pydocstyle==3.0.0
 pylint==2.2.2
+pytest-asyncio==0.10.0
 pytest-cov==2.6.0
 pytest-mock==1.10.0
 pytest-socket==0.3.1
 pytest==4.0.1
 q==2.6
+responses==0.10.5
 sphinx-bootstrap-theme==0.6.5
 sphinx-click==1.4.1
 tox==3.6.1

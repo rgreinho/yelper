@@ -49,7 +49,7 @@ async def deep_link(url, session):
         return f'\u274C'
 
     try:
-        async with session.get(url, headers=HEADERS, verify_ssl=False) as request:
+        async with session.get(url, headers=HEADERS, ssl=False) as request:
             response = await request.text()
             parser = html.fromstring(response)
             raw_website_link = parser.xpath("//span[contains(@class,'biz-website')]/a/@href")
@@ -70,7 +70,7 @@ async def deep_emails(url, session):
         return f'\u274C'
 
     try:
-        async with session.get(url, headers=HEADERS, verify_ssl=False) as request:
+        async with session.get(url, headers=HEADERS, ssl=False) as request:
             response = await request.text()
             emails = re.findall(r"[\w\.\+\-]+\@[\w]+\.[a-z]{2,4}", response)
     except Exception:
@@ -143,4 +143,5 @@ async def async_deep_query(terms, location, offset=0, limit=20, radius=40000, ou
 
 def deep_query(terms, location, offset, limit, radius, output, pages):
     """."""
-    asyncio.run(async_deep_query(terms, location, offset, limit, radius, output, pages))
+    asyncio.run(
+        async_deep_query(terms, location, offset=offset, limit=limit, radius=radius, output=output, pages=pages))

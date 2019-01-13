@@ -63,13 +63,13 @@ def cli(ctx, verbose):
 
 
 @click.command()
-@click.option('--location', default='austin, tx', help='the geographic area to search', show_default=True)
 @click.option('--offset', default=0, help='offset the list of results by this amount', show_default=True)
 @click.option('--limit', default=25, help='maximum number of results per page', show_default=True)
 @click.option('--radius', default=40000, help='search radius (in meters)', show_default=True)
 @click.option('--output', default='yelper.csv', help='filename to store the results', show_default=True)
 @click.option('--pages', default=0, help='number of result pages', show_default=True)
 @click.argument('terms')
+@click.argument('location')
 @click.pass_context
 def retrieve(ctx, location, offset, limit, radius, output, pages, terms):
     """Retrieve information from Yelp."""
