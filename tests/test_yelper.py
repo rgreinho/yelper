@@ -2,9 +2,16 @@
 import asyncio
 import json
 import os
+from textwrap import dedent
 
 from faker import Faker
 import pytest
+from pytest_bdd import (
+    given,
+    scenario,
+    then,
+    when,
+)
 from yelpapi import YelpAPI
 
 from yelper.core.yelper import async_deep_query
@@ -21,25 +28,54 @@ class TestYelpBusiness:
     """Test the YelpBusiness class."""
 
 
-class TestYelper:
-    """Tests for `yelper` module."""
-    fake = Faker()
+# class TestYelper:
+#     """Tests for `yelper` module."""
+#     fake = Faker()
 
-    @pytest.mark.asyncio
-    async def test_async_deep_query_00(self, mocker, tmp_path):
-        """Ensure a deepquery executes correctly."""
-        d = tmp_path / "test-output.csv"
-        d.mkdir()
-        output = d / "test-output.csv"
-        mocker.patch.dict(os.environ, {"YELP_API_KEY": self.fake.pystr()})
-        mocker.patch.object(YelpAPI, '_query', side_effect=[json.loads(YELP_SEARCH_RESULTS), {}])
-        mocker.patch('yelper.core.yelper.deep_link', return_value=async_mock(None), autospec=True)
-        await async_deep_query('bike shops', 'Austin, TX', output=output)
-        actual = output.read_text()
-        expected = 'name,phone,address,zipcode,link,emails\n'
-        expected += 'Monkey Wrench Bicycles,+15124672453,"5555 N Lamar Ste L131 Austin, TX 78751",78751,,❌\n'
-        expected += 'Bicycle Sport Shop,+15124773472,"517 S Lamar Blvd Austin, TX 78704",78704,,❌\n'
-        assert actual == expected
+#     @pytest.mark.asyncio
+#     async def test_async_deep_query_00(self, mocker, tmp_path):
+#         """Ensure a deepquery executes correctly."""
+#         d = tmp_path / "test-output.csv"
+#         d.mkdir()
+#         output = d / "test-output.csv"
+#         mocker.patch.dict(os.environ, {"YELP_API_KEY": self.fake.pystr()})
+#         mocker.patch.object(YelpAPI, '_query', side_effect=[json.loads(YELP_SEARCH_RESULTS), {}])
+#         mocker.patch('yelper.core.yelper.deep_link', return_value=async_mock(None), autospec=True)
+#         await async_deep_query('bike shops', 'Austin, TX', output=output)
+#         actual = output.read_text()
+#         expected = 'name,phone,address,zipcode,link,emails\n'
+#         expected += 'Monkey Wrench Bicycles,+15124672453,"5555 N Lamar Ste L131 Austin, TX 78751",78751,,❌\n'
+#         expected += 'Bicycle Sport Shop,+15124773472,"517 S Lamar Blvd Austin, TX 78704",78704,,❌\n'
+#         assert actual == expected
+
+
+@scenario('features/collect.feature', 'Collect information')
+def test_collect():
+    pass
+
+
+@given('a research for "bike shops" and "Austin, TX"')
+@pytest.mark.asyncio
+async def start_collecting(mocker, tmp_path):
+    fake = Faker()
+    d = tmp_path / 'sub'
+    d.mkdir()
+    output = d / "test-output.csv"
+
+    mocker.patch.dict(os.environ, {"YELP_API_KEY": fake.pystr()})
+    mocker.patch.object(YelpAPI, '_query', side_effect=[json.loads(YELP_SEARCH_RESULTS), {}])
+    mocker.patch('yelper.core.yelper.deep_link', return_value=async_mock(None), autospec=True)
+
+    await async_deep_query('bike shops', 'Austin, TX', output=output)
+    return output
+
+
+@then('the generated file contains the collected data')
+def ensure_results(start_collecting):
+    output = start_collecting
+    actual = output.read_text()
+    expected = MOCKED_CSV_FILE_CONTENT
+    assert actual == expected
 
 
 # Search results for "Bike shops in Austin, TX".
@@ -145,3 +181,9 @@ YELP_SEARCH_RESULTS = """
   }
 }
 """
+
+MOCKED_CSV_FILE_CONTENT = dedent("""\
+name,phone,address,zipcode,link,emails
+Monkey Wrench Bicycles,+15124672453,"5555 N Lamar Ste L131 Austin, TX 78751",78751,,❌
+Bicycle Sport Shop,+15124773472,"517 S Lamar Blvd Austin, TX 78704",78704,,❌
+""")

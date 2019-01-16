@@ -6,10 +6,11 @@ flake8==3.6.0
 pydocstyle==3.0.0
 pylint==2.2.2
 pytest-asyncio==0.10.0
-pytest-cov==2.6.0
+pytest-bdd==3.0.1
+pytest-cov==2.6.1
 pytest-mock==1.10.0
-pytest-socket==0.3.1
-pytest==4.0.1
+pytest-socket==0.3.2
+pytest==4.1.1
 q==2.6
 responses==0.10.5
 sphinx-bootstrap-theme==0.6.5
