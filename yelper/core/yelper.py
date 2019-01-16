@@ -9,7 +9,6 @@ import urllib3
 
 import aiohttp
 from lxml import html
-# import request
 from yelpapi import YelpAPI
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
