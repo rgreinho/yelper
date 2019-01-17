@@ -1,6 +1,8 @@
 Feature: Collect
-  As a user, I want to use Yelp to collect information about businesses.
+  As a user, I want to use Yelper to collect information about
+  businesses.
 
   Scenario: Collect information
-    Given a research for "bike shops" and "Austin, TX"
+    Given the user wants to store the results in a CSV file
+    And the user research for "bike shops" in "Austin, TX"
     Then the generated file contains the collected data
